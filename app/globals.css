@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  background-color: #05070d;
+  color: #e6f6ff;
+}
+
+body {
+  font-family: var(--font-rajdhani), sans-serif;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 20% 0%, rgba(56, 226, 255, 0.10) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 60% at 100% 100%, rgba(255, 46, 196, 0.08) 0%, transparent 60%),
+    linear-gradient(rgba(56, 226, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56, 226, 255, 0.06) 1px, transparent 1px);
+  background-size: auto, auto, 32px 32px, 32px 32px;
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+::selection {
+  background: rgba(56, 226, 255, 0.35);
+  color: #05070d;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(10, 15, 28, 0.6);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(56, 226, 255, 0.35);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 226, 255, 0.6);
+}
+
+@layer components {
+  .glass-panel {
+    @apply relative rounded-2xl border border-cyber-border bg-cyber-panel/70 backdrop-blur-xl;
+    box-shadow:
+      0 0 0 1px rgba(56, 226, 255, 0.05) inset,
+      0 20px 60px -20px rgba(0, 0, 0, 0.8),
+      0 0 30px rgba(56, 226, 255, 0.08);
+  }
+
+  .glass-panel-inner {
+    @apply rounded-xl border border-cyber-border/60 bg-cyber-panel2/60 backdrop-blur-md;
+  }
+
+  .hud-corner {
+    @apply pointer-events-none absolute h-5 w-5 border-cyber-cyan;
+  }
+
+  .hud-heading {
+    @apply font-display uppercase tracking-[0.2em] text-cyber-cyan2;
+  }
+
+  .neon-text {
+    text-shadow: 0 0 8px rgba(56, 226, 255, 0.7), 0 0 20px rgba(56, 226, 255, 0.35);
+  }
+
+  .neon-text-magenta {
+    text-shadow: 0 0 8px rgba(255, 46, 196, 0.7), 0 0 20px rgba(255, 46, 196, 0.35);
+  }
+
+  .btn-primary {
+    @apply relative inline-flex items-center justify-center gap-2 rounded-xl border border-cyber-cyan/50 bg-gradient-to-r from-cyber-cyan/20 to-cyber-violet/20 px-6 py-3 font-display text-sm uppercase tracking-[0.15em] text-cyber-cyan2 shadow-glow transition-all duration-200 hover:from-cyber-cyan/30 hover:to-cyber-violet/30 hover:shadow-glow disabled:cursor-not-allowed disabled:opacity-40;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-cyber-muted/40 bg-cyber-panel2/60 px-5 py-2.5 font-display text-xs uppercase tracking-[0.15em] text-cyber-muted transition-all duration-200 hover:border-cyber-cyan/40 hover:text-cyber-cyan2;
+  }
+
+  .stat-track {
+    @apply h-2.5 w-full overflow-hidden rounded-full bg-white/5;
+  }
+
+  .scan-grid {
+    background-image:
+      linear-gradient(rgba(56, 226, 255, 0.12) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(56, 226, 255, 0.12) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+}
