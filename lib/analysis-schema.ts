@@ -27,7 +27,7 @@ function extractJsonBlock(raw: string): string {
  * Parses raw text produced by an LLM and validates it against the strict
  * AnalysisResult contract:
  *   { mood: string, stress: number, fatigue: number, happiness: number,
- *     focus: number, analysisNote: string }
+ *     focus: number, authenticity: number, analysisNote: string }
  * Returns null if the text cannot be parsed or does not satisfy the
  * contract after normalization, so the caller can move on to the next
  * provider/key instead of returning malformed data to the client.
@@ -54,6 +54,11 @@ export function parseAnalysisJson(raw: string | null | undefined): AnalysisResul
   const fatigue = clampNumber(obj.fatigue);
   const happiness = clampNumber(obj.happiness);
   const focus = clampNumber(obj.focus);
+  // authenticity is validated leniently: if the model omits it or returns an
+  // unparsable value, fall back to a neutral 50 rather than discarding an
+  // otherwise valid analysis.
+  const authenticityRaw = clampNumber(obj.authenticity);
+  const authenticity = authenticityRaw === null ? 50 : authenticityRaw;
 
   if (!mood || !analysisNote) return null;
   if (stress === null || fatigue === null || happiness === null || focus === null) return null;
@@ -64,6 +69,7 @@ export function parseAnalysisJson(raw: string | null | undefined): AnalysisResul
     fatigue,
     happiness,
     focus,
+    authenticity,
     analysisNote,
   };
 }

@@ -9,6 +9,8 @@ import {
   BatteryLow,
   Camera,
   Cpu,
+  Fingerprint,
+  Info,
   RefreshCw,
   ScanFace,
   ShieldCheck,
@@ -106,6 +108,7 @@ export default function Home() {
         fatigue: data.fatigue,
         happiness: data.happiness,
         focus: data.focus,
+        authenticity: data.authenticity,
         analysisNote: data.analysisNote,
       });
       setPhase("result");
@@ -346,6 +349,14 @@ export default function Home() {
                     colorTo="#38e2ff"
                     delay={0.35}
                   />
+                  <StatBar
+                    icon={Fingerprint}
+                    label="Doğallık"
+                    value={result.authenticity}
+                    colorFrom="#39ff9d"
+                    colorTo="#38e2ff"
+                    delay={0.45}
+                  />
                 </div>
 
                 <motion.div
@@ -362,6 +373,20 @@ export default function Home() {
                   </div>
                   <p className="font-body text-sm leading-relaxed text-white/85">
                     {result.analysisNote}
+                  </p>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.75, duration: 0.4 }}
+                  className="mt-3 flex items-start gap-2 rounded-lg border border-cyber-border/50 bg-cyber-panel2/50 p-2.5"
+                >
+                  <Info className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-cyber-muted" />
+                  <p className="font-body text-[11px] leading-relaxed text-cyber-muted">
+                    Bu sonuçlar yalnızca eğlence ve farkındalık amaçlıdır; tıbbi veya klinik bir
+                    psikolojik değerlendirme niteliği taşımaz ve profesyonel bir değerlendirmenin
+                    yerini tutmaz.
                   </p>
                 </motion.div>
               </motion.div>

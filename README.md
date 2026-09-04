@@ -1,16 +1,17 @@
 # CyberMind Analytics
 
-CyberMind Analytics, selfie fotoğrafınız üzerinden yapay zeka destekli **psikolojik durum analizi** yapan, siber punk / bilim-kurgu temalı bir HUD (Head-Up Display) arayüzüne sahip tam kapsamlı bir web uygulamasıdır. Tarayıcınızın kamerasıyla anlık bir selfie çekersiniz; yapay zeka modeli yüzünüzdeki mikro ifadeleri analiz ederek anlık ruh halinizi, stres seviyenizi, yorgunluğunuzu, mutluluğunuzu ve odaklanma düzeyinizi saniyeler içinde ekrana yansıtır.
+CyberMind Analytics, selfie fotoğrafınız üzerinden yapay zeka destekli **psikolojik durum analizi** yapan, siber punk / bilim-kurgu temalı bir HUD (Head-Up Display) arayüzüne sahip tam kapsamlı bir web uygulamasıdır. Tarayıcınızın kamerasıyla anlık bir selfie çekersiniz; yapay zeka modeli yüzünüzdeki mikro ifadeleri analiz ederek anlık ruh halinizi, stres seviyenizi, yorgunluğunuzu, mutluluğunuzu, odaklanma düzeyinizi **ve ifadenizin ne kadar doğal/anlık mı yoksa poz verilmiş/yapmacık mı olduğunu** saniyeler içinde ekrana yansıtır.
 
-> **Not:** Bu uygulama eğlence ve farkındalık amaçlıdır; tıbbi teşhis niteliği taşımaz ve profesyonel bir psikolojik değerlendirmenin yerini tutmaz.
+> **⚠️ Önemli Uyarı:** CyberMind Analytics tamamen **eğlence ve kişisel farkındalık amaçlıdır**. Sunulan sonuçlar tıbbi, klinik veya profesyonel bir psikolojik teşhis/değerlendirme **niteliği taşımaz** ve bir uzmana danışmanın yerini **tutmaz**. Bu uyarı, sonuç panelinde ve uygulama arayüzünde de kullanıcıya ayrıca gösterilir.
 
 ## Özellikler
 
 - 📸 Tarayıcı üzerinden canlı kamera akışı ile selfie yakalama (ön/arka kamera geçişi destekli).
 - 🛰️ "Yüzü Tara" butonuna basıldığında çalışan animasyonlu lazer tarama efekti (Framer Motion).
 - 🧠 Yapay zeka destekli yüz mikro-ifade analizi: birincil sağlayıcı olarak **Google Gemini** (`gemini-flash-latest`), tüm anahtarlar başarısız olursa otomatik olarak **Groq** (`openai/gpt-oss-120b`) yedek sağlayıcısına geçiş.
+- 🕵️ **Doğallık / özgünlük analizi:** model, ifadenin göz bölgesi katılımı, kas gerginliği/simetrisi ve kameraya karşı "poz" belirtileri gibi somut ipuçlarına bakarak ifadenin **doğal/anlık mı yoksa poz verilmiş/performatif mi** olduğunu değerlendirir; bu yargı diğer skorlara ve "Analiz Notu" metnine de yansıtılır.
 - 🔁 Her sağlayıcı için birden fazla API anahtarı arasında otomatik rotasyon: bir anahtar kimlik doğrulama hatası, hız sınırı (429) veya sunucu hatası (5xx) verirse sıradaki anahtar otomatik olarak denenir.
-- 🎛️ Sonuç HUD paneli: ruh halini gösteren yarım daire gösterge (radial gauge), Stres Seviyesi / Yorgunluk / Anlık Mutluluk / Odaklanma için 0'dan başlayarak animasyonla dolan yüzde çubukları ve nitel etiketler (Düşük / Orta / Yüksek vb.), ayrıca modelin gözlemlediği mikro ifadeleri açıklayan "Analiz Notu" kutusu.
+- 🎛️ Sonuç HUD paneli: ruh halini gösteren yarım daire gösterge (radial gauge), Stres Seviyesi / Yorgunluk / Anlık Mutluluk / Odaklanma / **Doğallık** için 0'dan başlayarak animasyonla dolan yüzde çubukları ve nitel etiketler (Düşük / Orta / Yüksek vb.), modelin gözlemlediği mikro ifadeleri açıklayan "Analiz Notu" kutusu ve panel içinde ayrıca gösterilen eğlence/farkındalık amaçlı kullanım uyarısı.
 - 🌌 Karanlık tema, camsı (glassmorphism) paneller, neon vurgular ve ızgara arka plan ile tamamen Türkçe kullanıcı arayüzü.
 - 🔒 Tüm API anahtarları yalnızca sunucu tarafında, ortam değişkenleri (environment variables) üzerinden kullanılır; istemci tarafına veya derlenen (bundle) koda asla gönderilmez.
 

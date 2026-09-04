@@ -4,6 +4,7 @@ export interface AnalysisResult {
   fatigue: number;
   happiness: number;
   focus: number;
+  authenticity: number;
   analysisNote: string;
 }
 
