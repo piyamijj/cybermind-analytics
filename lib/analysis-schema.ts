@@ -23,11 +23,18 @@ function extractJsonBlock(raw: string): string {
   return trimmed;
 }
 
+function requireNonEmptyString(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
 /**
  * Parses raw text produced by an LLM and validates it against the strict
  * AnalysisResult contract:
- *   { mood: string, stress: number, fatigue: number, happiness: number,
- *     focus: number, authenticity: number, analysisNote: string }
+ *   { mood, stress, fatigue, happiness, focus, authenticity, analysisNote,
+ *     report: { fizikselFizyolojik, duygusalPsikolojik, bilisselYukOdak,
+ *               genelDegerlendirme } }
  * Returns null if the text cannot be parsed or does not satisfy the
  * contract after normalization, so the caller can move on to the next
  * provider/key instead of returning malformed data to the client.
@@ -63,6 +70,19 @@ export function parseAnalysisJson(raw: string | null | undefined): AnalysisResul
   if (!mood || !analysisNote) return null;
   if (stress === null || fatigue === null || happiness === null || focus === null) return null;
 
+  const reportRaw = obj.report;
+  if (!reportRaw || typeof reportRaw !== "object" || Array.isArray(reportRaw)) return null;
+  const reportObj = reportRaw as Record<string, unknown>;
+
+  const fizikselFizyolojik = requireNonEmptyString(reportObj.fizikselFizyolojik);
+  const duygusalPsikolojik = requireNonEmptyString(reportObj.duygusalPsikolojik);
+  const bilisselYukOdak = requireNonEmptyString(reportObj.bilisselYukOdak);
+  const genelDegerlendirme = requireNonEmptyString(reportObj.genelDegerlendirme);
+
+  if (!fizikselFizyolojik || !duygusalPsikolojik || !bilisselYukOdak || !genelDegerlendirme) {
+    return null;
+  }
+
   return {
     mood,
     stress,
@@ -71,5 +91,11 @@ export function parseAnalysisJson(raw: string | null | undefined): AnalysisResul
     focus,
     authenticity,
     analysisNote,
+    report: {
+      fizikselFizyolojik,
+      duygusalPsikolojik,
+      bilisselYukOdak,
+      genelDegerlendirme,
+    },
   };
 }

@@ -1,10 +1,10 @@
-import { ANALYSIS_SYSTEM_PROMPT } from "./prompt";
+import { buildVideoPrompt } from "./prompt";
 import { parseAnalysisJson } from "./analysis-schema";
-import type { AnalysisResult } from "./types";
+import type { AnalysisResult, MeasuredMetrics } from "./types";
 
 const GEMINI_MODEL = "gemini-flash-latest";
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
-const REQUEST_TIMEOUT_MS = 25000;
+const REQUEST_TIMEOUT_MS = 22000;
 
 export interface GeminiAttemptLog {
   keyLabel: string;
@@ -45,8 +45,9 @@ function maskKey(key: string): string {
 
 async function callGeminiOnce(
   apiKey: string,
-  imageBase64: string,
-  mimeType: string
+  videoBase64: string,
+  mimeType: string,
+  metrics: MeasuredMetrics
 ): Promise<{ result: AnalysisResult } | { error: string; status?: number }> {
   const { signal, cancel } = withTimeout(REQUEST_TIMEOUT_MS);
 
@@ -60,11 +61,11 @@ async function callGeminiOnce(
           {
             role: "user",
             parts: [
-              { text: ANALYSIS_SYSTEM_PROMPT },
+              { text: buildVideoPrompt(metrics) },
               {
                 inline_data: {
                   mime_type: mimeType,
-                  data: imageBase64,
+                  data: videoBase64,
                 },
               },
             ],
@@ -73,7 +74,7 @@ async function callGeminiOnce(
         generationConfig: {
           temperature: 0.6,
           topP: 0.9,
-          maxOutputTokens: 768,
+          maxOutputTokens: 3072,
           responseMimeType: "application/json",
         },
       }),
@@ -107,8 +108,9 @@ async function callGeminiOnce(
 }
 
 export async function callGeminiWithRotation(
-  imageBase64: string,
+  videoBase64: string,
   mimeType: string,
+  metrics: MeasuredMetrics,
   rawKeys: (string | undefined | null)[]
 ): Promise<{ result: AnalysisResult; logs: GeminiAttemptLog[] } | { result: null; logs: GeminiAttemptLog[] }> {
   const keys = prioritizeGeminiKeys(rawKeys);
@@ -116,7 +118,7 @@ export async function callGeminiWithRotation(
 
   for (const key of keys) {
     const label = maskKey(key);
-    const outcome = await callGeminiOnce(key, imageBase64, mimeType);
+    const outcome = await callGeminiOnce(key, videoBase64, mimeType, metrics);
 
     if ("result" in outcome) {
       logs.push({ keyLabel: label, ok: true });

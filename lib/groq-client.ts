@@ -1,6 +1,6 @@
-import { ANALYSIS_SYSTEM_PROMPT, ANALYSIS_TEXT_ONLY_FALLBACK_PROMPT } from "./prompt";
+import { buildMultiFramePrompt, buildTextOnlyFallbackPrompt } from "./prompt";
 import { parseAnalysisJson } from "./analysis-schema";
-import type { AnalysisResult } from "./types";
+import type { AnalysisResult, MeasuredMetrics } from "./types";
 
 const GROQ_MODEL = "openai/gpt-oss-120b";
 const GROQ_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions";
@@ -11,7 +11,7 @@ export interface GroqAttemptLog {
   ok: boolean;
   status?: number;
   message?: string;
-  mode: "multimodal" | "text-only";
+  mode: "multi-frame" | "text-only";
 }
 
 function cleanKeys(keys: (string | undefined | null)[]): string[] {
@@ -75,72 +75,89 @@ async function callGroqOnce(
   }
 }
 
-function buildMultimodalBody(imageBase64: string, mimeType: string): Record<string, unknown> {
+/**
+ * Builds a multi-image chat completion request from 3-5 representative
+ * frames extracted client-side from the video clip (each a full
+ * "data:image/jpeg;base64,..." data URL). Groq's chat completions API has
+ * no video input, so this is the closest equivalent: several stills spread
+ * across the clip instead of true temporal video understanding.
+ */
+function buildMultiFrameBody(frameDataUrls: string[], metrics: MeasuredMetrics): Record<string, unknown> {
+  const imageParts = frameDataUrls
+    .filter((url) => typeof url === "string" && url.trim().length > 0)
+    .map((url) => ({ type: "image_url", image_url: { url } }));
+
   return {
     model: GROQ_MODEL,
     temperature: 0.6,
-    max_tokens: 1100,
+    max_tokens: 2200,
     messages: [
-      { role: "system", content: ANALYSIS_SYSTEM_PROMPT },
+      { role: "system", content: buildMultiFramePrompt(metrics) },
       {
         role: "user",
         content: [
-          { type: "text", text: "Lütfen ekteki selfie fotoğrafını analiz et ve sözleşmeye uygun JSON çıktısını üret." },
-          { type: "image_url", image_url: { url: `data:${mimeType};base64,${imageBase64}` } },
+          {
+            type: "text",
+            text: "Ekteki, video klipten eşit aralıklarla alınmış temsili kareleri analiz et ve sözleşmeye uygun JSON çıktısını üret.",
+          },
+          ...imageParts,
         ],
       },
     ],
   };
 }
 
-function buildTextOnlyBody(): Record<string, unknown> {
+function buildTextOnlyBody(metrics: MeasuredMetrics): Record<string, unknown> {
   return {
     model: GROQ_MODEL,
     temperature: 0.9,
-    max_tokens: 1100,
+    max_tokens: 2200,
     messages: [
-      { role: "system", content: ANALYSIS_TEXT_ONLY_FALLBACK_PROMPT },
+      { role: "system", content: buildTextOnlyFallbackPrompt(metrics) },
       {
         role: "user",
         content:
-          "Görsel şu anda işlenemiyor; lütfen sözleşmeye uygun, makul ve çeşitlilik gösteren bir JSON tahmini üret.",
+          "Video şu anda işlenemiyor; lütfen sözleşmeye uygun, ölçülen verilerle tutarlı bir JSON tahmini üret.",
       },
     ],
   };
 }
 
 /**
- * Attempts the Groq fallback provider. First tries the exact same
- * multimodal (image + prompt) request across every provided key, rotating
- * on any failure (auth error, rate limit, server error, or an image
- * modality rejection from the model). If every key fails in multimodal
- * mode, a second pass rotates the same keys again using a text-only
- * heuristic prompt, so the API always has a final safety net and never
- * needs to hand the client a hard failure unless Groq itself is fully
- * unreachable on all keys in both modes.
+ * Attempts the Groq fallback provider. First tries a multi-frame request
+ * (3-5 representative stills extracted client-side from the video) across
+ * every provided key, rotating on any failure (auth error, rate limit,
+ * server error, or a modality rejection from the model). If every key
+ * fails in multi-frame mode, a second pass rotates the same keys again
+ * using a text-only prompt grounded in the real measured metrics, so the
+ * API always has a final safety net and never needs to hand the client a
+ * hard failure unless Groq itself is fully unreachable on all keys in
+ * both modes.
  */
 export async function callGroqWithRotation(
-  imageBase64: string,
-  mimeType: string,
+  frameDataUrls: string[],
+  metrics: MeasuredMetrics,
   rawKeys: (string | undefined | null)[]
 ): Promise<{ result: AnalysisResult; logs: GroqAttemptLog[] } | { result: null; logs: GroqAttemptLog[] }> {
   const keys = cleanKeys(rawKeys);
   const logs: GroqAttemptLog[] = [];
 
-  const multimodalBody = buildMultimodalBody(imageBase64, mimeType);
-  for (const key of keys) {
-    const label = maskKey(key);
-    const outcome = await callGroqOnce(key, multimodalBody);
+  if (frameDataUrls.length > 0) {
+    const multiFrameBody = buildMultiFrameBody(frameDataUrls, metrics);
+    for (const key of keys) {
+      const label = maskKey(key);
+      const outcome = await callGroqOnce(key, multiFrameBody);
 
-    if ("result" in outcome) {
-      logs.push({ keyLabel: label, ok: true, mode: "multimodal" });
-      return { result: outcome.result, logs };
+      if ("result" in outcome) {
+        logs.push({ keyLabel: label, ok: true, mode: "multi-frame" });
+        return { result: outcome.result, logs };
+      }
+
+      logs.push({ keyLabel: label, ok: false, status: outcome.status, message: outcome.error, mode: "multi-frame" });
     }
-
-    logs.push({ keyLabel: label, ok: false, status: outcome.status, message: outcome.error, mode: "multimodal" });
   }
 
-  const textOnlyBody = buildTextOnlyBody();
+  const textOnlyBody = buildTextOnlyBody(metrics);
   for (const key of keys) {
     const label = maskKey(key);
     const outcome = await callGroqOnce(key, textOnlyBody);
